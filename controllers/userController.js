@@ -104,12 +104,14 @@ const loadRegister = async(req,res)=>{
 const insertUser = async(req,res)=>{
 
     try {
+        console.log(req.body.birthdate);
         const spassword = await securePassword(req.body.password);
         const user = new User({
            name:req.body.name,
            email:req.body.email,
            mobile:req.body.mno,
            image:req.file.filename,
+           birthdate:req.body.birthdate,
            password:spassword,
            is_admin:0
         });
@@ -119,10 +121,12 @@ const insertUser = async(req,res)=>{
         if(userData){
             sendVerifyMail(req.body.name, req.body.email, userData._id);
            res.render('registration',{message:"Your registration has been successfully, Please verify your mail."});
+          
         }
         else{
            res.render('registration',{message:"Your registration has been failed."});
         }
+       
 
     } catch (error) {
         console.log(error.message);
@@ -152,6 +156,8 @@ const loginLoad = async(req,res)=>{
     try {
         
         res.render('login');
+
+     
 
     } catch (error) {
         console.log(error.message);
@@ -198,7 +204,28 @@ const loadHome = async(req,res)=>{
     try {
         
         const userData = await User.findById({ _id:req.session.user_id });
-        res.render('home',{ user:userData });
+        // userData.xcs="lucky";
+       
+var today= new Date();
+var bday=new Date(userData.birthdate);   
+if(today.getTime() > bday.getTime()){
+    bday.setFullYear(bday.getFullYear()+1);
+}
+// if(today.getMonth() == bday.getMonth() && today.getDate() > bday.getTime()){
+//     bday.setFullYear(bday.getFullYear()+1);
+// }
+var diff =bday.getTime()-today.getTime();
+ var days =Math.floor(diff/(1000*60*60*24));
+ console.log(days);
+if(days >= 7){
+    userData.daysleft=`your birthday is soon`;
+  
+}else{
+    userData.daysleft=`${days}  days left for your birthday`; 
+}
+       
+
+       res.render('home',{ user:userData });
 
     } catch (error) {
         console.log(error.message);
@@ -358,10 +385,10 @@ const updateProfile = async(req,res)=>{
     try {
         
         if(req.file){
-            const userData = await User.findByIdAndUpdate({ _id:req.body.user_id },{ $set:{name:req.body.name, email:req.body.email, mobile:req.body.mno, image:req.file.filename} });
+            const userData = await User.findByIdAndUpdate({ _id:req.body.user_id },{ $set:{name:req.body.name, email:req.body.email, mobile:req.body.mno, image:req.file.filename,  birthdate:req.body.birthdate,} });
         }
         else{
-           const userData = await User.findByIdAndUpdate({ _id:req.body.user_id },{ $set:{name:req.body.name, email:req.body.email, mobile:req.body.mno} });
+           const userData = await User.findByIdAndUpdate({ _id:req.body.user_id },{ $set:{name:req.body.name, email:req.body.email, mobile:req.body.mno, birthdate:req.body.birthdate,} });
         }
 
         res.redirect('/home');
